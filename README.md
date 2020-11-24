@@ -1,2 +1,2 @@
 # ci-runner
-fdev-runnner
+ci-runner
