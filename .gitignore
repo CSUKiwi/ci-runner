@@ -19,3 +19,5 @@
 *.DS_Store
 vendor/
 bin/
+main
+main.exe

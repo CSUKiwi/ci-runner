@@ -1,0 +1,40 @@
+title = "CI Runner Config TOML Example"
+name = "ci-runner"
+executor = "kubernetes"
+#executor = "docker"
+concurrent = 10
+log_level = "warning"
+listen_address = ":9252"
+url = "http://localhost:8080"
+token = "123qweasdzxc"
+
+[kubernetes]
+config = "/Users/luotao/.kube/config"
+namespace = "gitlab"
+
+[kafka]
+    [kafka.read]
+        brokerList = "localhost:9092"
+        topic = "super-runner"
+        groupId = "super-runner"
+    [kafka.writer]
+        brokerList = "localhost:9092"
+        topic = "super-runner-write"
+
+[minio]
+    url = "localhost:9001"
+    bucket = "super-runner"
+    access_key = "AKIAIOSFODNN7EXAMPLE"
+    secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+[git]
+    name = "yuyangfeng"
+    password = "2989c1308d96b8eec932cd5b52af4529"
+[docker]
+    workspace = "/workspace"
+    dns = ["10.141.63.86","10.141.63.87"]
+    privileged = true
+    [[docker.volumes]]
+      name = "workspace"
+      source = "/tmp/workspace"
+      target = "/workspace"
+      read_only = false
