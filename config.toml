@@ -2,6 +2,7 @@ title = "CI Runner Config TOML Example"
 name = "ci-runner"
 executor = "kubernetes"
 #executor = "docker"
+#executor = "local"
 concurrent = 10
 log_level = "warning"
 listen_address = ":9252"

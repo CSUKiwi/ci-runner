@@ -88,11 +88,22 @@ func Run(cfgFile string)  {
 func run()  {
 	apiclient :=network.NewCiApiClient()
 	// 未到并发上线,每隔 3s 获取 job
-	for currentWorkers <= config.Concurrent{
-		job,ok := apiclient.RequestJob(config)
-		if ok {
-			logrus.Println(job.ID)
-			logrus.Println(job.Token)
+	for {
+		if currentWorkers <= config.Concurrent{
+			jobData, healthy := apiclient.RequestJob(config)
+			if healthy == false {
+				logrus.Errorln("Runner is not healthy and will be disabled!")
+			}
+			if jobData != nil {
+				go func() {
+					new_job := common.Job{
+						Runner: config,
+						JobResponse: *jobData,
+					}
+					new_job.Run()
+				}()
+
+			}
 		}
 		time.Sleep(1000 * time.Second)
 	}
