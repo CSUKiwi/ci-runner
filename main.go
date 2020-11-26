@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/tluo-github/ci-runner/cmd"
-	_ "github.com/tluo-github/ci-runner/internal/pkg/executors/kubernetes"
-	_ "github.com/tluo-github/ci-runner/internal/pkg/executors/local"
+	"github.com/fdev-ci/ci-runner/cmd"
+	_ "github.com/fdev-ci/ci-runner/internal/pkg/executors/kubernetes"
+	_ "github.com/fdev-ci/ci-runner/internal/pkg/executors/local"
 )
 
 func main() {

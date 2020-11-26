@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/tluo-github/ci-runner/internal/pkg/common"
+	"github.com/fdev-ci/ci-runner/internal/pkg/common"
 )
 
 func init() {

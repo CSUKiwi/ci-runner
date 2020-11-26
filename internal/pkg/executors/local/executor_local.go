@@ -2,8 +2,8 @@ package local
 
 import (
 	"github.com/sirupsen/logrus"
-	"github.com/tluo-github/ci-runner/internal/pkg/common"
-	"github.com/tluo-github/ci-runner/internal/pkg/executors"
+	"github.com/fdev-ci/ci-runner/internal/pkg/common"
+	"github.com/fdev-ci/ci-runner/internal/pkg/executors"
 )
 
 type LocalExecutor struct {

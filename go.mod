@@ -1,8 +1,8 @@
-module github.com/tluo-github/ci-runner
+module github.com/fdev-ci/ci-runner
 
 go 1.14
 
-replace github.com/tluo-github/ci-runner => ./
+replace github.com/fdev-ci/ci-runner => ./
 
 require (
 	github.com/BurntSushi/toml v0.3.1

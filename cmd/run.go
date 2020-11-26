@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/tluo-github/ci-runner/internal/app/run"
+	"github.com/fdev-ci/ci-runner/internal/app/run"
 )
 
 var cfgFile string

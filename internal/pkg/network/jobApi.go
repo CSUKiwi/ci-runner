@@ -3,7 +3,7 @@ package network
 import (
 	"fmt"
 	"github.com/sirupsen/logrus"
-	"github.com/tluo-github/ci-runner/internal/pkg/common"
+	"github.com/fdev-ci/ci-runner/internal/pkg/common"
 	"net/http"
 	"runtime"
 	"sync"

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/tluo-github/ci-runner/internal/pkg/common"
+	"github.com/fdev-ci/ci-runner/internal/pkg/common"
 	"github.com/jpillora/backoff"
 	"net"
 	"strings"

@@ -1,7 +1,7 @@
 package executors
 
 import (
-	"github.com/tluo-github/ci-runner/internal/pkg/common"
+	"github.com/fdev-ci/ci-runner/internal/pkg/common"
 )
 type DefaultExecutorProvider struct {
 	Creator          func() common.Executor

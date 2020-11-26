@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/sirupsen/logrus"
-	"github.com/tluo-github/ci-runner/internal/pkg/common"
+	"github.com/fdev-ci/ci-runner/internal/pkg/common"
 	"io/ioutil"
 	api "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

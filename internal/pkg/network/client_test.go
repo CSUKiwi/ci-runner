@@ -3,7 +3,7 @@ package network
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	. "github.com/tluo-github/ci-runner/internal/pkg/common"
+	. "github.com/fdev-ci/ci-runner/internal/pkg/common"
 	"io"
 	"io/ioutil"
 	"net/http"

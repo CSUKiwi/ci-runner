@@ -3,7 +3,7 @@ package network
 import (
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
-	. "github.com/tluo-github/ci-runner/internal/pkg/common"
+	. "github.com/fdev-ci/ci-runner/internal/pkg/common"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
