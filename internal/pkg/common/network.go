@@ -28,10 +28,8 @@ type JobInfo struct {
 	Kubernetes KubernetesConfig	`json:"kubernetes,omitempty"`
 	Variables  JobVariables		`json:"variables,omitempty"`
 	Timeout 	int32  `json:"timeout,omitempty"`
-
-
-
 }
+
 type KubernetesConfig struct {
 	Volumes      KubernetesVolumes	`json:"volumes,omitempty"`
 }

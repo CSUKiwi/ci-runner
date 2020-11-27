@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"os"
+	"strings"
 	"time"
 )
 type KubernetesExecutor struct {
@@ -87,9 +88,35 @@ func (e *KubernetesExecutor) prepareOptions()  {
 func (e *KubernetesExecutor) Run() error {
 	logrus.Info("Run")
 
+	// 开始通过 k8s client 让 pod 执行命令
 
-	time.Sleep(1000 * time.Second)
-	return nil
+	script := "#!/usr/bin/env bash\n\nset -eo pipefail\nset +o noclobber\nexport ci_data_dir=/tmp/1/workspace\nexport ci_data_input=input.json\nexport ci_data_output=output.json\nmkdir -p $ci_data_dir\nwget http://172.20.10.3:8080/api/v4/atom/input -O $ci_data_dir/input.json\nwget http://10.107.250.219:80/goDemo -O $ci_data_dir/goDemo\nchmod +x $ci_data_dir/goDemo\nsh -c $ci_data_dir/goDemo\ncat $ci_data_dir/$ci_data_output | curl -v -X POST -H \"Content-Type: application/json\" http://172.20.10.3:8080/api/v4/atom/output -d @-"
+	logrus.Debugln(fmt.Sprintf(
+		"Starting in container %q with script: %s",
+		e.pod_name,
+		script,
+	))
+	err := <-e.runInContainer(script)
+	if err != nil && strings.Contains(err.Error(), "command terminated with exit code") {
+		return &common.BuildError{Inner: err}
+	}
+
+
+	script = "#!/usr/bin/env bash\n\nset -eo pipefail\nset +o noclobber\nexport ci_data_dir=/tmp/2/workspace\nexport ci_data_input=input.json\nexport ci_data_output=output.json\nmkdir -p $ci_data_dir\nwget http://172.20.10.3:8080/api/v4/atom/gobash/input -O $ci_data_dir/input.json\nwget http://10.107.250.219:80/goBash -O $ci_data_dir/goBash\nchmod +x $ci_data_dir/goBash\nsh -c $ci_data_dir/goBash\ncat $ci_data_dir/$ci_data_output | curl -v -X POST -H \"Content-Type: application/json\" http://172.20.10.3:8080/api/v4/atom/output -d @-"
+	logrus.Debugln(fmt.Sprintf(
+		"Starting in container %q with script: %s",
+		e.pod_name,
+		script,
+	))
+
+	err = <-e.runInContainer(script)
+	if err != nil && strings.Contains(err.Error(), "command terminated with exit code") {
+		return &common.BuildError{Inner: err}
+	}
+
+	return err
+
+
 }
 
 
@@ -163,6 +190,52 @@ func (e *KubernetesExecutor) setupBuildPod() error {
 
 }
 
+
+func (e *KubernetesExecutor) runInContainer(script string) <-chan error  {
+	errc := make(chan error, 1)
+
+	go func() {
+		status, err := k8s_helper.WaitForPodRunning(e.kubeClient, e.pod)
+		if err != nil {
+			e.buildFinish <- err
+			return
+		}
+		if status != api.PodRunning {
+			e.IsSystemError = true
+			e.buildFinish <- fmt.Errorf("pod failed to enter running state: %s", status)
+			return
+		}
+
+		logrus.WithFields(logrus.Fields{
+			"pod_name": e.pod_name,
+		}).Info("pod state is PodRunning")
+
+		config, err := k8s_helper.GetKubeClientConfig(e.job.Runner.Kubernetes)
+		if err != nil {
+			e.buildFinish <- err
+			return
+		}
+		command := []string{"sh","-c",common.BashDetectShell}
+
+		exec := ExecOptions{
+			PodName:       e.pod.Name,
+			Namespace:     e.pod.Namespace,
+			ContainerName: "build",
+			Command:       command,
+			In:            strings.NewReader(script),
+			Out:           e.BuildLog,
+			Err:           e.BuildLog,
+			Stdin:         true,
+			Config:        config,
+			Client:        e.kubeClient,
+			Executor:      &DefaultRemoteExecutor{},
+		}
+		errc <- exec.Run()
+	}()
+	return errc
+
+}
+
 func (e *KubernetesExecutor) Wait() error {
 	logrus.Info("Wait")
 	return nil
@@ -180,28 +253,8 @@ func (e *KubernetesExecutor) buildContainer(name string, image string)  api.Cont
 	privileged := true
 
 
-	const bashDetectShell = `
-if [ -x /usr/local/bin/bash ]; then
-	exec /usr/local/bin/bash 
-elif [ -x /usr/bin/bash ]; then
-	exec /usr/bin/bash 
-elif [ -x /bin/bash ]; then
-	exec /bin/bash 
-elif [ -x /usr/local/bin/sh ]; then
-	exec /usr/local/bin/sh 
-elif [ -x /usr/bin/sh ]; then
-	exec /usr/bin/sh 
-elif [ -x /bin/sh ]; then
-	exec /bin/sh 
-elif [ -x /busybox/sh ]; then
-	exec /busybox/sh 
-else
-	echo shell not found
-	exit 1
-fi
 
-`
-	command := []string{"sh","-c",bashDetectShell}
+	command := []string{"sh","-c",common.BashDetectShell}
 
 	liveness := api.Probe{
 		Handler:  api.Handler{

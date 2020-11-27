@@ -84,6 +84,9 @@ func (n *CiApiClient) RequestJob(config common.RunnerConfig)(*common.JobResponse
 		return nil, true
 	}
 }
+
+
+
 func NewCiApiClient() *CiApiClient {
 	return &CiApiClient{}
 }
