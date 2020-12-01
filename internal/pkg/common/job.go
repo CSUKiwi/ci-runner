@@ -10,7 +10,6 @@ type Job struct {
 	Runner RunnerConfig
 	JobResponse
 }
-
 func (j *Job) Run() error {
 	var err error
 	provider :=	GetExecutor(j.Runner.Executor)
@@ -39,7 +38,7 @@ func (j *Job) Run() error {
 		err = executor.Wait()
 	} else {
 		// 记录执行失败
-		executor.SendError(err)
+			executor.SendError(err)
 	}
 
 	executor.Cleanup()

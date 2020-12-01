@@ -30,6 +30,18 @@ type JobInfo struct {
 	Timeout 	int32  `json:"timeout,omitempty"`
 }
 
+type AtomRequest struct {
+	JobId	   int       `json:"jod_id"`
+	Token      string    `json:"token"`	// job 的 token
+	Index	   int 		 `json:"index"`  // 该job 的 atom 下标
+
+}
+type AtomResponse struct {
+	ID            int            `json:"id"`
+	Script		  string     	 `json:"script"`
+}
+
+
 type KubernetesConfig struct {
 	Volumes      KubernetesVolumes	`json:"volumes,omitempty"`
 }

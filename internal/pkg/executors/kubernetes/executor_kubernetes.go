@@ -3,10 +3,11 @@ package kubernetes
 import (
 	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"github.com/fdev-ci/ci-runner/internal/pkg/common"
 	"github.com/fdev-ci/ci-runner/internal/pkg/executors"
+	"github.com/fdev-ci/ci-runner/internal/pkg/network"
 	k8s_helper "github.com/fdev-ci/ci-runner/pkg/helpers/k8s"
+	"github.com/sirupsen/logrus"
 	api "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -87,32 +88,57 @@ func (e *KubernetesExecutor) prepareOptions()  {
 
 func (e *KubernetesExecutor) Run() error {
 	logrus.Info("Run")
-
+	var err error
 	// 开始通过 k8s client 让 pod 执行命令
+	apiclient :=network.NewCiApiClient()
 
-	script := "#!/usr/bin/env bash\n\nset -eo pipefail\nset +o noclobber\nexport ci_data_dir=/tmp/1/workspace\nexport ci_data_input=input.json\nexport ci_data_output=output.json\nmkdir -p $ci_data_dir\nwget http://172.20.10.3:8080/api/v4/atom/input -O $ci_data_dir/input.json\nwget http://10.107.250.219:80/goDemo -O $ci_data_dir/goDemo\nchmod +x $ci_data_dir/goDemo\nsh -c $ci_data_dir/goDemo\ncat $ci_data_dir/$ci_data_output | curl -v -X POST -H \"Content-Type: application/json\" http://172.20.10.3:8080/api/v4/atom/output -d @-"
-	logrus.Debugln(fmt.Sprintf(
-		"Starting in container %q with script: %s",
-		e.pod_name,
-		script,
-	))
-	err := <-e.runInContainer(script)
-	if err != nil && strings.Contains(err.Error(), "command terminated with exit code") {
-		return &common.BuildError{Inner: err}
+	// 循环处理 atoms
+	for i := 0; i < 2; i++ {
+		atomData, healthy := apiclient.RequestAtom(e.job.Runner,e.job.ID,e.job.Token,i)
+		if healthy != true{
+			logrus.Errorln("RqeustAtom is not healthy !")
+			return errors.New("RqeustAtom is not healthy")
+		}
+		if atomData != nil {
+			logrus.Debugln(fmt.Sprintf(
+				"Starting in container %q with script: %s",
+				e.pod_name,
+				atomData.Script,
+			))
+				err = <-e.runInContainer(atomData.Script)
+			if err != nil && strings.Contains(err.Error(), "command terminated with exit code") {
+				return &common.BuildError{Inner: err}
+			}
+		}
 	}
 
 
-	script = "#!/usr/bin/env bash\n\nset -eo pipefail\nset +o noclobber\nexport ci_data_dir=/tmp/2/workspace\nexport ci_data_input=input.json\nexport ci_data_output=output.json\nmkdir -p $ci_data_dir\nwget http://172.20.10.3:8080/api/v4/atom/gobash/input -O $ci_data_dir/input.json\nwget http://10.107.250.219:80/goBash -O $ci_data_dir/goBash\nchmod +x $ci_data_dir/goBash\nsh -c $ci_data_dir/goBash\ncat $ci_data_dir/$ci_data_output | curl -v -X POST -H \"Content-Type: application/json\" http://172.20.10.3:8080/api/v4/atom/output -d @-"
-	logrus.Debugln(fmt.Sprintf(
-		"Starting in container %q with script: %s",
-		e.pod_name,
-		script,
-	))
 
-	err = <-e.runInContainer(script)
-	if err != nil && strings.Contains(err.Error(), "command terminated with exit code") {
-		return &common.BuildError{Inner: err}
-	}
+
+
+	//script := "#!/usr/bin/env bash\n\nset -eo pipefail\nset +o noclobber\nexport ci_data_dir=/tmp/1/workspace\nexport ci_data_input=input.json\nexport ci_data_output=output.json\nmkdir -p $ci_data_dir\nwget http://172.20.10.3:8080/api/v4/atom/input -O $ci_data_dir/input.json\nwget http://10.107.250.219:80/goDemo -O $ci_data_dir/goDemo\nchmod +x $ci_data_dir/goDemo\nsh -c $ci_data_dir/goDemo\ncat $ci_data_dir/$ci_data_output | curl -v -X POST -H \"Content-Type: application/json\" http://172.20.10.3:8080/api/v4/atom/output -d @-"
+	//logrus.Debugln(fmt.Sprintf(
+	//	"Starting in container %q with script: %s",
+	//	e.pod_name,
+	//	script,
+	//))
+	//err := <-e.runInContainer(script)
+	//if err != nil && strings.Contains(err.Error(), "command terminated with exit code") {
+	//	return &common.BuildError{Inner: err}
+	//}
+	//
+	//
+	//script = "#!/usr/bin/env bash\n\nset -eo pipefail\nset +o noclobber\nexport ci_data_dir=/tmp/2/workspace\nexport ci_data_input=input.json\nexport ci_data_output=output.json\nmkdir -p $ci_data_dir\nwget http://172.20.10.3:8080/api/v4/atom/gobash/input -O $ci_data_dir/input.json\nwget http://10.107.250.219:80/goBash -O $ci_data_dir/goBash\nchmod +x $ci_data_dir/goBash\nsh -c $ci_data_dir/goBash\ncat $ci_data_dir/$ci_data_output | curl -v -X POST -H \"Content-Type: application/json\" http://172.20.10.3:8080/api/v4/atom/output -d @-"
+	//logrus.Debugln(fmt.Sprintf(
+	//	"Starting in container %q with script: %s",
+	//	e.pod_name,
+	//	script,
+	//))
+	//
+	//err = <-e.runInContainer(script)
+	//if err != nil && strings.Contains(err.Error(), "command terminated with exit code") {
+	//	return &common.BuildError{Inner: err}
+	//}
 
 	return err
 
@@ -134,8 +160,10 @@ func (e *KubernetesExecutor) setupBuildPod() error {
 	//todo step labels
 	//todo step annotations
 	//todo step imagePullSecrets
-
+	command := []string{"sh","-c",common.BashDetectShell}
+	//command := []string{"sh","-c","tail -f /dev/null"}
 	pod_container := e.buildContainer("build", e.options.Image.Name)
+	pod_container.Command = command
 	PodDNSConfig := api.PodDNSConfig{
 		Nameservers: e.job.Runner.Kubernetes.DNS,
 		Searches:    nil,
@@ -254,7 +282,7 @@ func (e *KubernetesExecutor) buildContainer(name string, image string)  api.Cont
 
 
 
-	command := []string{"sh","-c",common.BashDetectShell}
+
 
 	liveness := api.Probe{
 		Handler:  api.Handler{
@@ -278,7 +306,7 @@ func (e *KubernetesExecutor) buildContainer(name string, image string)  api.Cont
 		VolumeMounts:			  e.getVolumeMounts(),
 		Stdin:                    true,
 		LivenessProbe: &liveness,
-		Command: command,
+		//Command: command,
 
 	}
 }

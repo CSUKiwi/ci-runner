@@ -81,10 +81,40 @@ func (n *CiApiClient) RequestJob(config common.RunnerConfig)(*common.JobResponse
 		return nil, false
 	default:
 		logrus.WithField("status", statusText).Warningln("Checking for jobs...", "failed")
-		return nil, true
+		return nil, false
 	}
 }
 
+func (n *CiApiClient) RequestAtom(config common.RunnerConfig,jobId int,token string,index int)(*common.AtomResponse, bool)  {
+	var response common.AtomResponse
+	request := common.AtomRequest{
+		JobId: jobId,
+		Token: token,
+		Index: index,
+	}
+
+	result, statusText, _ := n.doJSON(&config.RunnerCredentials, "POST", "atoms/request", http.StatusCreated, &request, &response)
+
+	switch result {
+	case http.StatusCreated:
+		logrus.WithFields(logrus.Fields{
+			"atom":      response.ID,
+		}).Println("Checking for atoms...", "received")
+		return &response, true
+	case http.StatusForbidden:
+		logrus.Errorln("Checking for atoms...", "forbidden")
+		return nil, false
+	case http.StatusNoContent:
+		logrus.Debugln("Checking for atoms...", "nothing")
+		return nil, true
+	case clientError:
+		logrus.WithField("status", statusText).Errorln("Checking for atoms...", "error")
+		return nil, false
+	default:
+		logrus.WithField("status", statusText).Warningln("Checking for atoms...", "failed")
+		return nil, false
+	}
+}
 
 
 func NewCiApiClient() *CiApiClient {
