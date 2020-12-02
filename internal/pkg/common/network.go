@@ -25,11 +25,15 @@ type JobInfo struct {
 	Stage       string `json:"stage"`
 	Image		Image  `json:"image"`
 	Services    Services `json:"services,omitempty"`
-	Kubernetes KubernetesConfig	`json:"kubernetes,omitempty"`
+	Volumes      []Volume	`json:"volumes,omitempty"`
 	Variables  JobVariables		`json:"variables,omitempty"`
+	Atoms		Atoms	`json:"atoms"`
 	Timeout 	int32  `json:"timeout,omitempty"`
 }
 
+type Atoms struct {
+	Count	int `json:"count"`
+}
 type AtomRequest struct {
 	JobId	   int       `json:"jod_id"`
 	Token      string    `json:"token"`	// job 的 token
@@ -41,14 +45,7 @@ type AtomResponse struct {
 	Script		  string     	 `json:"script"`
 }
 
-
-type KubernetesConfig struct {
-	Volumes      KubernetesVolumes	`json:"volumes,omitempty"`
-}
-type KubernetesVolumes struct {
-	Host_paths  []KubernetesHostPath  `json:"host_paths,omitempty"`
-}
-type KubernetesHostPath struct {
+type Volume struct {
 	Name      string `json:"name"`
 	Mount_path string `json:"mount_path"`
 	Read_only  bool   `json:"read_only"`

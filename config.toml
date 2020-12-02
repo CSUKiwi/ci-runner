@@ -12,6 +12,8 @@ token = "123qweasdzxc"
 [kubernetes]
 config = "/Users/luotao/.kube/config"
 namespace = "gitlab"
+dns = ["172.20.10.1"]
+
 
 [kafka]
     [kafka.read]

@@ -3,7 +3,7 @@ package common
 import "time"
 
 const NAME = "super-runner"
-const VERSION = "2020-12-01"
+const VERSION = "2020-12-02"
 const DefaultMetricsServerPort = 9252	//prometheus metrics 端口
 const DefaultLivessTimeout = 1800		// pod 生产时间
 const KubernetesPollInterval = 10 * time.Second // 每次查询 pod 详情 间隔时间

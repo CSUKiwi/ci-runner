@@ -92,8 +92,8 @@ func (e *KubernetesExecutor) Run() error {
 	// 开始通过 k8s client 让 pod 执行命令
 	apiclient :=network.NewCiApiClient()
 
-	// 循环处理 atoms
-	for i := 0; i < 2; i++ {
+	//循环处理 atoms
+	for i := 0; i < e.job.JobInfo.Atoms.Count; i++ {
 		atomData, healthy := apiclient.RequestAtom(e.job.Runner,e.job.ID,e.job.Token,i)
 		if healthy != true{
 			logrus.Errorln("RqeustAtom is not healthy !")
@@ -105,40 +105,37 @@ func (e *KubernetesExecutor) Run() error {
 				e.pod_name,
 				atomData.Script,
 			))
-				err = <-e.runInContainer(atomData.Script)
+			err = <-e.runInContainer(atomData.Script)
 			if err != nil && strings.Contains(err.Error(), "command terminated with exit code") {
 				return &common.BuildError{Inner: err}
 			}
 		}
 	}
 
-
-
-
-
-	//script := "#!/usr/bin/env bash\n\nset -eo pipefail\nset +o noclobber\nexport ci_data_dir=/tmp/1/workspace\nexport ci_data_input=input.json\nexport ci_data_output=output.json\nmkdir -p $ci_data_dir\nwget http://172.20.10.3:8080/api/v4/atom/input -O $ci_data_dir/input.json\nwget http://10.107.250.219:80/goDemo -O $ci_data_dir/goDemo\nchmod +x $ci_data_dir/goDemo\nsh -c $ci_data_dir/goDemo\ncat $ci_data_dir/$ci_data_output | curl -v -X POST -H \"Content-Type: application/json\" http://172.20.10.3:8080/api/v4/atom/output -d @-"
+	//before_atom_git := "#!/usr/bin/env bash\nset -eo pipefail\nset +o noclobber\n\nexport ci_data_dir=/workspace/xxyyzz/stage-0/job-0/atom-0\nexport ci_data_input=input.json\nexport ci_data_output=output.json\nmkdir -p $ci_data_dir\nwget http://10.244.167.188:80/goBash -O $ci_data_dir/goBash\nwget http://172.20.10.3:8080/api/v4/atom/git/input -O $ci_data_dir/input.json\nchmod +x $ci_data_dir/goBash\nsh -c $ci_data_dir/goBash\ncat $ci_data_dir/$ci_data_output | curl -v -X POST -H \"Content-Type: application/json\" http://172.20.10.3:8080/api/v4/atom/output -d @-"
 	//logrus.Debugln(fmt.Sprintf(
 	//	"Starting in container %q with script: %s",
 	//	e.pod_name,
-	//	script,
+	//	before_atom_git,
 	//))
-	//err := <-e.runInContainer(script)
+	//err = <-e.runInContainer(before_atom_git)
 	//if err != nil && strings.Contains(err.Error(), "command terminated with exit code") {
 	//	return &common.BuildError{Inner: err}
 	//}
 	//
 	//
-	//script = "#!/usr/bin/env bash\n\nset -eo pipefail\nset +o noclobber\nexport ci_data_dir=/tmp/2/workspace\nexport ci_data_input=input.json\nexport ci_data_output=output.json\nmkdir -p $ci_data_dir\nwget http://172.20.10.3:8080/api/v4/atom/gobash/input -O $ci_data_dir/input.json\nwget http://10.107.250.219:80/goBash -O $ci_data_dir/goBash\nchmod +x $ci_data_dir/goBash\nsh -c $ci_data_dir/goBash\ncat $ci_data_dir/$ci_data_output | curl -v -X POST -H \"Content-Type: application/json\" http://172.20.10.3:8080/api/v4/atom/output -d @-"
+	//
+	//script := "#!/usr/bin/env bash\nset -eo pipefail\nset +o noclobber\n\nexport PATH=$JAVA_HOME/bin:$PATH\nexport PATH=$MAVEN_HOME/bin:$PATH\n\nexport ci_data_dir=/workspace/xxyyzz/stage-0/job-0/atom-1\nexport ci_data_input=input.json\nexport ci_data_output=output.json\n\nmkdir -p $ci_data_dir\nwget http://10.244.167.188:80/goBash -O $ci_data_dir/goBash\nwget http://172.20.10.3:8080/api/v4/atom/maven/input -O $ci_data_dir/input.json\nchmod +x $ci_data_dir/goBash\nsh -c $ci_data_dir/goBash\ncat $ci_data_dir/$ci_data_output | curl -v -X POST -H \"Content-Type: application/json\" http://172.20.10.3:8080/api/v4/atom/output -d @-"
 	//logrus.Debugln(fmt.Sprintf(
 	//	"Starting in container %q with script: %s",
 	//	e.pod_name,
 	//	script,
 	//))
-	//
 	//err = <-e.runInContainer(script)
 	//if err != nil && strings.Contains(err.Error(), "command terminated with exit code") {
 	//	return &common.BuildError{Inner: err}
 	//}
+
 
 	return err
 
@@ -273,6 +270,7 @@ func (e *KubernetesExecutor)SendError(err error)  {
 }
 func (e *KubernetesExecutor) Cleanup() error {
 	logrus.Info("Cleanup")
+
 	return nil
 }
 
@@ -313,7 +311,7 @@ func (e *KubernetesExecutor) buildContainer(name string, image string)  api.Cont
 
 // 获得所有 VolumeMounts
 func (e *KubernetesExecutor) getVolumeMounts() (mounts []api.VolumeMount) {
-	for _, mount := range e.job.JobInfo.Kubernetes.Volumes.Host_paths {
+	for _, mount := range e.job.JobInfo.Volumes {
 		mounts = append(mounts, api.VolumeMount{
 			Name:      mount.Name,
 			MountPath: mount.Mount_path,
@@ -325,7 +323,7 @@ func (e *KubernetesExecutor) getVolumeMounts() (mounts []api.VolumeMount) {
 
 // 获得所有的 Volume
 func (s *KubernetesExecutor) getVolumes() (volumes []api.Volume) {
-	for _, volume := range s.job.JobInfo.Kubernetes.Volumes.Host_paths {
+	for _, volume := range s.job.JobInfo.Volumes {
 		path := volume.Host_path
 		// Make backward compatible with syntax introduced in version 9.3.0
 		if path == "" {

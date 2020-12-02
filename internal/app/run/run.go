@@ -2,11 +2,11 @@ package run
 
 import (
 	"github.com/BurntSushi/toml"
+	"github.com/fdev-ci/ci-runner/internal/pkg/common"
+	"github.com/fdev-ci/ci-runner/internal/pkg/network"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
-	"github.com/fdev-ci/ci-runner/internal/pkg/common"
-	"github.com/fdev-ci/ci-runner/internal/pkg/network"
 	"net"
 	"net/http"
 	"os"
@@ -105,7 +105,7 @@ func run()  {
 
 			}
 		}
-		time.Sleep(1000 * time.Second)
+		time.Sleep(60 * time.Second)
 	}
 }
 
