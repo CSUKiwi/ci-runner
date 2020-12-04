@@ -18,7 +18,7 @@ func (j *Job) Run() error {
 		return err
 	}
 	executor := provider.Create()
-	job_name := fmt.Sprintf("ci-runner-%s-%d",j.JobResponse.JobInfo.Name,j.JobResponse.JobInfo.Timestamp)
+	job_name := fmt.Sprintf("ci-runner-%s-%d",j.JobResponse.JobInfo.JobName,j.JobResponse.JobInfo.Timestamp)
 
 	json_byte, _ := json.Marshal(&j.JobResponse)
 	logrus.WithFields(logrus.Fields{

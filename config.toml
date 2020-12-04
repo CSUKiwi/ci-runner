@@ -13,6 +13,7 @@ token = "123qweasdzxc"
 config = "/Users/luotao/.kube/config"
 namespace = "gitlab"
 dns = ["172.20.10.1"]
+helper_image = "ci-runner-helper:latest"
 
 
 [kafka]

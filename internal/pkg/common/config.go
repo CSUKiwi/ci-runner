@@ -69,6 +69,8 @@ type Kubernetes struct {
 	Config		string `toml:"config,omitempty"`
 	Namespace	string `toml:"namespace,omitempty"`
 	DNS  		[]string `toml:"dns,omitempty"`
+	HelperImage string   `toml:"helper_image,omitempty"`
+
 
 }
 

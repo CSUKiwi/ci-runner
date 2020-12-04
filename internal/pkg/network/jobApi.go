@@ -85,14 +85,15 @@ func (n *CiApiClient) RequestJob(config common.RunnerConfig)(*common.JobResponse
 	}
 }
 
-func (n *CiApiClient) RequestAtom(config common.RunnerConfig,jobId int,token string,index int)(*common.AtomResponse, bool)  {
+func (n *CiApiClient) RequestAtom(config common.RunnerConfig,pipeline string,stageIndex int,jobIndex int,atomIndex int,token string)(*common.AtomResponse, bool)  {
 	var response common.AtomResponse
 	request := common.AtomRequest{
-		JobId: jobId,
-		Token: token,
-		Index: index,
+		Pipeline:  pipeline,
+		StageIndex:     stageIndex,
+		JobIndex:       jobIndex,
+		AtomIndex: atomIndex,
+		Token:     token,
 	}
-
 	result, statusText, _ := n.doJSON(&config.RunnerCredentials, "POST", "atoms/request", http.StatusCreated, &request, &response)
 
 	switch result {
